@@ -1,10 +1,4 @@
-# Guided Transfer Learning for Discrete Diffusion Models
-
-> **GTL** adapts a pretrained discrete diffusion model to a target domain — without updating the denoiser — by learning a lightweight ratio network that reweights the source reverse transitions at sampling time.
-
-📄 [Paper](https://arxiv.org/abs/XXXX.XXXXX) | 🤗 [arXiv Abstracts Dataset](https://huggingface.co/datasets/arxiv_org_submitters)
-
----
+# Guided Transfer Learning for Discrete Language Models 
 
 ## Overview
 
@@ -12,20 +6,7 @@ GTL freezes a pretrained source denoiser and trains a small ratio estimator on m
 
 **Key results:** GTL outperforms both vanilla and fine-tuned discrete diffusion across data-scarce regimes, while training only ~7% as many parameters.
 
----
-
-## Code Architecture
-
-All models are built on a shared PyTorch Lightning base class.
-
-### `base_dm_model.py` — Shared Parent Class
-`BaseDMModel` extends `lightning.LightningModule` and centralises all logic shared across models:
-- **Corruption** (`_q_xt`): absorbing-state (masking) or uniform noise forward process
-- **Time sampling** (`_sample_t`): antithetic and importance sampling support
-- **Checkpoint fast-forwarding**: fault-tolerant resumption via `on_load_checkpoint` / `on_save_checkpoint`
-- **Dataloader re-wiring**: swaps in `FaultTolerantDistributedSampler` at training start for reproducible, resumable data loading
-
-Every model below inherits from `BaseDMModel`.
+![Overview](../figures/mauve_vs_fraction.png)
 
 ---
 
@@ -33,7 +14,7 @@ Every model below inherits from `BaseDMModel`.
 
 | File | Class | Role |
 |---|---|---|
-| `diffusion.py` | `Diffusion` | Source denoiser $p_\theta$. Trained on source data with the masked diffusion objective. Frozen during GTL. |
+| `diffusion.py` | `Diffusion` | Source denoiser $p_\theta$. Trained on source data with the masked diffusion objective. Frozen during GTL. Also implements the guided denoising algorithm at sampling time: combines the frozen denoiser logits with ratio network scores, applies top-$n_\text{ratio}$ pruning, mask-probability stabilization, and planner-selected position sampling (Algorithm 1 in the paper). |
 | `classifier.py` | `Classifier` | Domain classifier $d_\omega$. Trained with binary labels (source=1, target=0). Provides pseudo-ratio targets for the ratio network. Supports both time-independent and time-dependent variants. |
 | `ratio.py` | `RatioEstimator` | Ratio network $r_\phi(x_t, t)$. Trained with a guidance loss (against the frozen classifier) and a cycle-consistency loss on target data. Core component of GTL at sampling time. |
 | `planner.py` | `Planner` | Planner network $\rho_\vartheta$. Predicts which masked position to unmask next. Reduces per-step ratio evaluations from $\mathcal{O}(L \|\mathcal{V}\|)$ to $\mathcal{O}(n_\text{ratio})$. |
@@ -43,12 +24,27 @@ Every model below inherits from `BaseDMModel`.
 
 ### Training Order
 ```
-1. Train Classifier     (classifier.py)   — time-independent + time-dependent
-2. Train Source Denoiser (diffusion.py)   — freeze after training
+1. Train Source Denoiser (diffusion.py)   — freeze after training
+2. Train Classifier     (classifier.py)   — time-independent + time-dependent
 3. Train Ratio Estimator (ratio.py)       — uses frozen classifier + denoiser
 4. Train Planner        (planner.py)      — uses frozen denoiser for labels
 5. Sample               (diffusion.py)    — guided by ratio + planner
 ```
+
+---
+
+## Dataset
+
+We use the [arXiv abstracts dataset](https://www.kaggle.com/datasets/Cornell-University/arxiv), tokenized with `bert-base-uncased` (vocab size $N = 30{,}522$) into segments of 512 tokens.
+Then link the path "pathto/arxiv_abstracts/arxiv-metadata-oai-snapshot.json" in [Line](https://github.com/juliankleutgens/Guided-Transfer-Learning-for-Discrete-Diffusion-Models/blob/main/discrete-language-diffusion/configs/data/arxiv_abstracts.yaml#L4)
+
+| Domain | Samples |
+|---|---|
+| Computer Science | 285,946 |
+| Mathematics | 176,831 |
+| Physics (target) | 79,631 |
+
+The source domain is CS ∪ Math (+ an optional fraction $r$ of Physics). The target domain is the remaining Physics abstracts.
 
 ---
 
@@ -88,21 +84,6 @@ eval "$(conda shell.bash hook)"
 mamba activate /your/path/gtl_env
 set -u
 ```
-
----
-
-## Dataset
-
-We use the [arXiv abstracts dataset](https://www.kaggle.com/datasets/Cornell-University/arxiv), tokenized with `bert-base-uncased` (vocab size $N = 30{,}522$) into segments of 512 tokens.
-Then link the path "pathto/arxiv_abstracts/arxiv-metadata-oai-snapshot.json" in 
-
-| Domain | Samples |
-|---|---|
-| Computer Science | 285,946 |
-| Mathematics | 176,831 |
-| Physics (target) | 79,631 |
-
-The source domain is CS ∪ Math (+ an optional fraction $r$ of Physics). The target domain is the remaining Physics abstracts.
 
 ---
 
