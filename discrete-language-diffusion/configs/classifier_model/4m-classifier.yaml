@@ -1,0 +1,11 @@
+name: 4m
+type: ddit
+hidden_size: 96
+cond_dim: 48
+length: ${model.length}
+n_blocks: 8
+n_heads: 8
+scale_by_sigma: True
+dropout: 0.1
+num_classes: 2
+pooling: mean

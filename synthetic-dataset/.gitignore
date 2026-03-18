@@ -1,0 +1,14 @@
+# Mac system files
+.DS_Store
+# Python cache
+__pycache__/
+plots/
+wandb/
+results.json
+logs/
+sbtach_comparision_loop.sh
+.vscode/
+plot_for_paper.py
+plot_function.py
+plots
+grids_for_paper

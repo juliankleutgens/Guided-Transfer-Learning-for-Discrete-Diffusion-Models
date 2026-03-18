@@ -1,0 +1,223 @@
+# ---------- Defaults ----------
+defaults:
+  - _self_
+  - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
+  - /data: openwebtext
+  - /model: tiny
+  - /strategy: ddp
+  - /noise: loglinear
+  - /lr_scheduler: cosine_decay_warmup
+  - /classifier_model: micro-classifier   # options: small | tiny | micro
+  - /ratio_model: tiny-ratio             # options: small | tiny | tiny-4m 
+  - /gamma: constant                     # options: piecewise_linear | constant 
+  - /guidance: null
+
+# ---------- Global settings ----------
+seed: 1
+mode: train                              # options: train | ppl_eval | sample_eval | train_ratio | sample_planner_eval
+
+# ---------- Diffusion / Model ----------
+diffusion: absorbing_state               # options: absorbing_state | uniform
+backbone: dit                            # options: dit | dimamba
+classifier_backbone: dit                 # options: dit | dimamba
+planner_backbone: dit 
+ratio_backbone: dit
+parameterization: subs                   # options: subs | d3pm | sedd
+time_conditioning: false                  # if true, σₜ is passed into backbone while sampling
+T: 0                                     # 0 = continuous time, 1000 = discrete steps
+subs_masking: false                      # true: mask‑only (MLDM) | false: full substitution (D3PM)
+debug: false                             # true: only 10 steps for training and only 200 Samples, for debugging 
+
+# =====================
+#  Data Loading
+# =====================
+loader:
+  global_batch_size: 128            # global batch size, i.e., per accelerator
+  eval_global_batch_size: ${.global_batch_size}
+
+  # batch_size and eval_batch_size are **per machine**
+  batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
+  eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
+
+  num_workers: ${eval:"len(__import__('os').sched_getaffinity(0))"}
+  pin_memory: false
+  persistent_workers: true
+
+  tgt_split_pct: 0 # The percentage of the target domain to use in the source domain, no overlapping samples. 
+  get_a_balance_between_src_tgt_samples: 1.0 # 1.0 is a natural ratio between tgt src samples. <1.0 thows out number of sample in tgt domain to achive that ratio
+  lose_pct_tgt_samples: 1.0 # 1.0 means no loss of tgt samples, <1.0 means throwing out a percentage of tgt samples to achieve a better balance between src and tgt samples it over writes the get_a_balance_between_src_tgt_samples
+  seed_for_splits: 42 # seed for random operations in data loading, e.g. tgt_split_pct
+
+
+# =====================
+#  Sampling
+# =====================
+sampling:  
+  predictor: ddpm_cache                  # options: analytic | ddpm | ddpm_cache
+  steps: 128
+  noise_removal: true                 # if true, use noise removal at the end of sampling, one last denoising step
+  num_sample_batches: 8                # total samples = num_gpus * loader.eval_batch_size * num_sample_batches
+  num_sample_log: 2
+  semi_ar: false
+  stride_length: 1
+  num_strides: 0
+  guided_sampling: false
+  batch_size_ratio: 1024                   # batch size for ratio model sampling, e.g., 1 for single GPU, 8 for 8 GPUs
+  top_k_sampling: 8                     # 0 = no top-k sampling, > 0 = top-k sampling
+  compute_top_k_ratio: 512
+  print_all_noise_sequences: false          # if true, print all noise sequences during sampling. 
+  # --- With Planner Sampling 
+  plan_random: false               # if true, use random planning steps instead of learned planner
+
+
+# =====================
+#  Training (common anchor)
+# =====================
+training: &base_training
+  ema: 0.9999
+  antithetic_sampling: true
+  importance_sampling: false
+  sampling_eps: 1e-3
+  change_of_variables: false            # switch in different noisy metric
+  domain: src                           # tgt | src
+
+training_classifier:
+  <<: *base_training
+  use_label_smoothing: true
+  label_smoothing_eps: 0.1
+  val_metric_for_best_model: cross_entropy   # options: gen_ppl | cross_entropy | total
+
+training_planner:
+  <<: *base_training
+  val_metric_for_best_model: cross_entropy
+
+training_ratio:
+  <<: *base_training
+  eta1: 0.1                            # cycle regularization
+  eta2: 0.0                            # consistency regularization
+  classifier_output_with_sigmoid: false
+  val_metric_for_best_model: total
+  mixed_domain_batches: false
+
+# =====================
+#  Evaluation
+# =====================
+eval:
+  checkpoint_path: ''                  # path to evaluate checkpoint after training
+  disable_ema: false
+  compute_generative_perplexity: false
+  perplexity_batch_size: 1
+  compute_perplexity_on_sanity: false
+  gen_ppl_eval_model_name_or_path: facebook/opt-2.7b    # e.g. gpt2-large | meta-llama/Llama-2-7b-hf | EleutherAI/gpt-j-6B | EleutherAI/gpt-neo-2.7B
+  generate_samples: false
+  domain: tgt                     # options: src | tgt during sample_eval
+  classify_samples: true
+  guided_validation: false 
+  topk_remass: -1          # -1 = no top-k re-mass, >0 = top-k re-mass
+  
+# =====================
+#  Optimizer
+# =====================
+optim:
+  weight_decay: 0
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1e-8
+
+# =====================
+#  Trainer (common anchor)
+# =====================
+trainer: &base_trainer
+  _target_: lightning.Trainer
+  accelerator: cuda
+  num_nodes: 1
+  devices: ${device_count:}
+  accumulate_grad_batches: ${div_up:${loader.global_batch_size}, ${eval:${trainer.devices} * ${loader.batch_size} * ${trainer.num_nodes}}}
+  gradient_clip_val: 1.0
+  precision: 'bf16-mixed'                      # 'bf16' or '32-true' for mixed precision
+  num_sanity_val_steps: 2
+  max_steps: 50_000                        # default: 1_000_000
+  log_every_n_steps: 10
+  limit_train_batches: 1.0             # 1.0 = full dataset
+  limit_val_batches: 1.0               # 1.0 = full dataset
+  val_check_interval: 1.0              # every ... epoch if <= 1.0, or every ... steps if > 1.0
+
+# Trainers for different tasks
+trainer_ti:
+  <<: *base_trainer
+  val_check_interval: 1_000
+  max_steps: 5_000
+
+trainer_td:
+  <<: *base_trainer
+  val_check_interval: 1_000
+  max_steps: 5_000
+
+trainer_ratio:
+  <<: *base_trainer
+  val_check_interval: 0.5
+  max_steps: 30_000
+
+trainer_planner:
+  <<: *base_trainer
+  val_check_interval: 500
+  max_steps: 10_000
+
+# =====================
+#  Model checkpoints
+# =====================
+classifier_ti:
+  ckpt_path: ""
+  retrain_when_loaded: false           # just use it, don't train
+
+classifier_td:
+  ckpt_path: ""                        # leave blank to train from scratch
+  retrain_when_loaded: false           # just use it, don't train
+
+ratio_model:
+  ckpt_path: ""                        # no pre-trained ratio -> will train
+  retrain_when_loaded: true
+
+planner:
+  ckpt_path: ""                        # no pre-trained ratio -> will train
+  retrain_when_loaded: false
+
+# =====================
+#  Logging
+# =====================
+wandb:
+  project: text-diffusion
+  notes: training
+  group: null
+  job_type: null
+  name: null
+  id: ${.name}_${seed}
+  tags:
+    - ${noise.type}
+    - ${data.train}
+    - ${data.valid}
+
+# =====================
+#  Hydra
+# =====================
+hydra:
+  run:
+    dir: ./outputs/${data.train}/${mode}/${now:%Y.%m.%d}/${now:%H%M%S}_${wandb.name}    #${eval:"f'{__import__(\"random\").randint(0,9999):04d}'"}
+  job:
+    chdir: true
+
+# =====================
+#  Checkpointing
+# =====================
+checkpointing:
+  save_dir: ${cwd:}                    # custom dir, e.g., S3 bucket
+  resume_from_ckpt: true
+  resume_ckpt_path: ${.save_dir}/checkpoints/last.ckpt
+
+
+# ====================
+#  System
+# ====================
+system:
+  hf_cache_root: /n/netscratch/dominici_lab/Lab/juliank/hf_cache/huggingface
