@@ -101,12 +101,3 @@ set -u
 ```
 
 ---
-
-## Citation
-```bibtex
-@article{kleutgens2025gtl,
-  title     = {Guided Transfer Learning for Discrete Diffusion Models},
-  author    = {Kleutgens, Julian and Battiloro, Claudio and Kong, Lingkai and Grewe, Benjamin and Dominici, Francesca and Tec, Mauricio},
-  year      = {2025},
-}
-```
