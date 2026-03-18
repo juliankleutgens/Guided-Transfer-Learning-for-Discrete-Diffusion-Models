@@ -54,3 +54,15 @@ Guided-Transfer-Learning-for-Discrete-Diffusion-Models/
 ├── synthetic-dataset/
 └── discrete-language-diffusion/
 
+## Citation
+```@misc{kleutgens2026guidedtransferlearningdiscrete,
+      title={Guided Transfer Learning for Discrete Diffusion Models}, 
+      author={Julian Kleutgens and Claudio Battiloro and Lingkai Kong and Benjamin Grewe and Francesca Dominici and Mauricio Tec},
+      year={2026},
+      eprint={2512.10877},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2512.10877}, 
+}
+```
+
