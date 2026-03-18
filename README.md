@@ -47,12 +47,6 @@ The repository is organized into two main components corresponding to the experi
   Contains the code for the language modeling experiments using masked discrete diffusion.  
   This module includes the implementation of the proposed guided sampling algorithm, enabling transfer learning for large-vocabulary sequence generation.
 
-```text
-Guided-Transfer-Learning-for-Discrete-Diffusion-Models/
-├── README.md
-├── .gitignore
-├── synthetic-dataset/
-└── discrete-language-diffusion/
 
 ## Citation
 ```@misc{kleutgens2026guidedtransferlearningdiscrete,
