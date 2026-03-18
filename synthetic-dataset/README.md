@@ -56,9 +56,22 @@ The goal is to show that:
 
 ---
 ![Overview](../figures/synthetic_illustration.png)
-## Key Implementation Detail
+## 🛠️ Environment Setup
 
-The core of the method is implemented in:
+**Step 1 — Create & activate the conda environment**
+```bash
+conda create -n myenv python=3.11 -y
+conda activate myenv
+```
 
-```text
-diffusion.py
+**Step 2 — Install PyTorch**
+```bash
+conda install pytorch torchvision torchaudio -c pytorch -y
+```
+
+> 💡 For GPU support, visit [pytorch.org](https://pytorch.org/get-started/locally/) and replace the above with the command matching your CUDA version.
+
+**Step 3 — Install remaining dependencies**
+```bash
+pip install numpy matplotlib tqdm torchinfo
+```
