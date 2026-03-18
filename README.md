@@ -1,7 +1,7 @@
 # Guided Transfer Learning for Discrete Diffusion Models
 Julian Kleutgens, Claudio Battiloro, Lingkai Kong, Benjamin Grewe, Francesca Dominici, Mauricio Tec
 
-This repository contains the code for the paper https://arxiv.org/abs/2512.10877
+This repository contains the code for the 📄[Paper](https://arxiv.org/abs/2512.10877)
 
 ## Abstract 
 Discrete diffusion models (DMs) have achieved strong performance in language and other discrete domains, offering a compelling alternative to autoregressive modeling. Yet this performance typically depends on large training datasets, challenging the performance of DMs in small-data regimes---common under real-world constraints. Aimed at this challenge, recent work in continuous DMs suggests that transfer learning via classifier ratio--based guidance can adapt a pretrained DM to a related target distribution, often outperforming alternatives such as full-weight fine-tuning on the target data. By contrast, transfer learning for discrete DMs remains  unexplored.
