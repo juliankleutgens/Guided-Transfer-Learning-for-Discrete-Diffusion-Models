@@ -1,5 +1,5 @@
 # Guided Transfer Learning for Discrete Diffusion Models
-Julian Kleutgens, Claudio Battiloro, Lingkai Kong, Benjamin Grewe, Francesca Dominici, Mauricio Tec
+[Julian Kleutgens](https://www.linkedin.com/in/julian-kleutgens/), [Claudio Battiloro](https://cbattiloro.com/), [Lingkai Kong](https://lingkai-kong.com/), [Benjamin Grewe](https://grewelab.org/biography), [Francesca Dominici](https://scholar.google.com/citations?user=RSwElNMAAAAJ&hl=en), [Mauricio Tec](https://mauriciogtec.com/)
 
 This repository contains the code for the 📄[Paper](https://arxiv.org/abs/2512.10877)
 
