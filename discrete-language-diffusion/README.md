@@ -31,6 +31,21 @@ GTL freezes a pretrained source denoiser and trains a small ratio estimator on m
 5. Sample               (diffusion.py)    — guided by ratio + planner
 ```
 
+## Modes
+
+All experiments are launched via `main.py` by setting `cfg.mode`. The table below maps each mode to its role in the GTL pipeline.
+
+| `cfg.mode` | Description |
+|---|---|
+| `train` | Train the source denoiser $p_\theta$ on source-domain data using the masked diffusion objective. Run this first. |
+| `train_ratio` | Run the full ratio training pipeline: trains the time-independent classifier, time-dependent classifier, and ratio estimator $r_\phi$ in sequence. Requires a pretrained denoiser. |
+| `train_planner` | Train the planner network $\rho_\vartheta$ using the frozen source denoiser to generate binary correctness labels over masked positions. |
+| `sample_eval` | Generate samples using ancestral guided sampling (ratio + denoiser, no planner). Evaluates with MAUVE and domain classifier score. |
+| `sample_planner_eval` | Generate samples using planner-guided sampling, where the planner selects one position per step, reducing complexity to $\mathcal{O}(n_\text{ratio})$ per step. |
+| `ppl_eval` | Evaluate generative perplexity (Gen. PPL) of generated samples using an external language model. |
+| `full_evaluation` | Runs `sample_eval` followed by `ppl_eval` in one go — full end-to-end evaluation. |
+
+
 ---
 
 ## Dataset
