@@ -1,5 +1,4 @@
 # Synthetic Dataset Experiments
-![Overview](../figures/synthetic_illustration.png)
 This folder contains a lightweight implementation of the experiments described in **Section 4.1 (Synthetic Dataset)** of the paper.
 
 The goal of this module is to provide a simple and fast environment to validate the proposed method before moving to large-scale language modeling.
@@ -56,7 +55,7 @@ The goal is to show that:
 - GTL is more stable than fine-tuning  
 
 ---
-
+![Overview](../figures/synthetic_illustration.png)
 ## Key Implementation Detail
 
 The core of the method is implemented in:
