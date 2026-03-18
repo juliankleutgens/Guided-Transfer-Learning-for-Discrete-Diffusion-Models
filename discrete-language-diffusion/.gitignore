@@ -14,3 +14,5 @@ guided.txt
 tlddm.txt
 readoutlog.py
 plots_and_outputs/
+.DS_Store
+
