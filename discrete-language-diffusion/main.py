@@ -315,31 +315,6 @@ def generate_samples(config, logger, tokenizer):
 
 
 
-def _ppl_eval(config, logger, tokenizer):
-  logger.info('Starting Zero Shot Eval.')
-
-  model = _load_from_checkpoint(config=config,tokenizer=tokenizer)
-  if config.eval.disable_ema:
-    logger.info('Disabling EMA.')
-    model.ema = None
-
-  wandb_logger = None
-  if config.get('wandb', None) is not None:
-    wandb_logger = L.pytorch.loggers.WandbLogger(config=omegaconf.OmegaConf.to_object(config),** config.wandb)
-  callbacks = []
-  if 'callbacks' in config:
-    for _, callback in config.callbacks.items():
-      callbacks.append(hydra.utils.instantiate(callback))
-  trainer = hydra.utils.instantiate(
-    config.trainer,
-    default_root_dir=os.getcwd(),
-    callbacks=callbacks,
-    strategy=hydra.utils.instantiate(config.strategy),
-    logger=wandb_logger)
-  domain = config.eval.get("domain", "src")
-  _, valid_ds = dataloader.get_dataloaders(config, tokenizer, skip_train=True,domain=domain)
-  trainer.validate(model, valid_ds)
-
 def train_planner(cfg: DictConfig, callbacks: list, wandb_logger, tokenizer):
     """Train (or load) the planner on the SOURCE dataset."""
     # 1) Source loaders
@@ -451,13 +426,8 @@ def main(cfg: DictConfig) -> None:
         generate_samples(cfg, logger, tokenizer)
     elif cfg.mode == "sample_planner_eval":
         generate_samples(cfg, logger, tokenizer)
-    elif cfg.mode == "ppl_eval":
-        _ppl_eval(cfg, logger, tokenizer)
     elif cfg.mode == "train_planner":
        train_planner(cfg, callbacks, wandb_logger, tokenizer)
-    elif cfg.mode == "full_evaluation":
-       generate_samples(cfg, logger, tokenizer)
-       _ppl_eval(cfg, logger, tokenizer)
     else:
         raise ValueError(f"Unknown mode: {cfg.mode}")
 
