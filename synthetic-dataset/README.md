@@ -60,8 +60,8 @@ The goal is to show that:
 
 **Step 1 — Create & activate the conda environment**
 ```bash
-conda create -n myenv python=3.11 -y
-conda activate myenv
+conda create -n gtl_sythetic python=3.11 -y
+conda activate gtl_sythetic
 ```
 
 **Step 2 — Install PyTorch**
