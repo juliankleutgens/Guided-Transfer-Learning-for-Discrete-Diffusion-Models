@@ -1,7 +1,5 @@
 # Guided Transfer Learning for Discrete Diffusion Models
-[Julian Kleutgens](https://www.linkedin.com/in/julian-kleutgens/), [Claudio Battiloro](https://cbattiloro.com/), [Lingkai Kong](https://lingkai-kong.com/), [Benjamin Grewe](https://grewelab.org/biography), [Francesca Dominici](https://scholar.google.com/citations?user=RSwElNMAAAAJ&hl=en), [Mauricio Tec](https://mauriciogtec.com/)
 
-This repository contains the code for the 📄[Paper](https://arxiv.org/abs/2512.10877)
 
 ## Abstract 
 Discrete diffusion models (DMs) have achieved strong performance in language and other discrete domains, offering a compelling alternative to autoregressive modeling. Yet this performance typically depends on large training datasets, challenging the performance of DMs in small-data regimes---common under real-world constraints. Aimed at this challenge, recent work in continuous DMs suggests that transfer learning via classifier ratio--based guidance can adapt a pretrained DM to a related target distribution, often outperforming alternatives such as full-weight fine-tuning on the target data. By contrast, transfer learning for discrete DMs remains  unexplored.
@@ -48,15 +46,4 @@ The repository is organized into two main components corresponding to the experi
   This module includes the implementation of the proposed guided sampling algorithm, enabling transfer learning for large-vocabulary sequence generation.
 
 
-## Citation
-```@misc{kleutgens2026guidedtransferlearningdiscrete,
-      title={Guided Transfer Learning for Discrete Diffusion Models}, 
-      author={Julian Kleutgens and Claudio Battiloro and Lingkai Kong and Benjamin Grewe and Francesca Dominici and Mauricio Tec},
-      year={2026},
-      eprint={2512.10877},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2512.10877}, 
-}
-```
 
