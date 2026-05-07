@@ -51,7 +51,6 @@ All experiments are launched via `main.py` by setting `cfg.mode`. The table belo
 ## Dataset
 
 We use the [arXiv abstracts dataset](https://www.kaggle.com/datasets/Cornell-University/arxiv), tokenized with `bert-base-uncased` (vocab size $N = 30{,}522$) into segments of 512 tokens.
-Then link the path "pathto/arxiv_abstracts/arxiv-metadata-oai-snapshot.json" in [Line](https://github.com/juliankleutgens/Guided-Transfer-Learning-for-Discrete-Diffusion-Models/blob/main/discrete-language-diffusion/configs/data/arxiv_abstracts.yaml#L4)
 
 | Domain | Samples |
 |---|---|
